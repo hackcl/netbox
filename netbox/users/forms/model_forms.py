@@ -202,18 +202,12 @@ class UserForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.instance.pk:
-            # Populate assigned permissions
-            self.fields['object_permissions'].initial = self.instance.object_permissions.values_list('id', flat=True)
-
             # Password fields are optional for existing Users
             self.fields['password'].required = False
             self.fields['confirm_password'].required = False
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
-
-        # Update assigned permissions
-        instance.object_permissions.set(self.cleaned_data['object_permissions'])
 
         # On edit, check if we have to save the password
         if self.cleaned_data.get('password'):
@@ -259,14 +253,12 @@ class GroupForm(forms.ModelForm):
         # Populate assigned users and permissions
         if self.instance.pk:
             self.fields['users'].initial = self.instance.users.values_list('id', flat=True)
-            self.fields['object_permissions'].initial = self.instance.object_permissions.values_list('id', flat=True)
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
 
-        # Update assigned users and permissions
+        # Update assigned users
         instance.users.set(self.cleaned_data['users'])
-        instance.object_permissions.set(self.cleaned_data['object_permissions'])
 
         return instance
 
@@ -334,9 +326,10 @@ class ObjectPermissionForm(forms.ModelForm):
         # Make the actions field optional since the form uses it only for non-CRUD actions
         self.fields['actions'].required = False
 
-        # Order group and user fields
-        self.fields['groups'].queryset = self.fields['groups'].queryset.order_by('name')
-        self.fields['users'].queryset = self.fields['users'].queryset.order_by('username')
+        # Populate assigned users and groups
+        if self.instance.pk:
+            self.fields['groups'].initial = self.instance.groups.values_list('id', flat=True)
+            self.fields['users'].initial = self.instance.users.values_list('id', flat=True)
 
         # Check the appropriate checkboxes when editing an existing ObjectPermission
         if self.instance.pk:
@@ -380,3 +373,12 @@ class ObjectPermissionForm(forms.ModelForm):
                     raise forms.ValidationError({
                         'constraints': _('Invalid filter for {model}: {error}').format(model=model, error=e)
                     })
+
+    def save(self, *args, **kwargs):
+        instance = super().save(*args, **kwargs)
+
+        # Update assigned users and groups
+        instance.users.set(self.cleaned_data['users'])
+        instance.groups.set(self.cleaned_data['groups'])
+
+        return instance
