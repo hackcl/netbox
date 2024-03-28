@@ -29,7 +29,7 @@ class DeviceIPsReport(Report):
     description = "Check that every device has a primary IP address assigned"
 ```
 
-Within each report class, we'll create a number of test methods to execute our report's logic. In DeviceConnectionsReport, for instance, we want to ensure that every live device has a console connection, an out-of-band management connection, and two power connections.
+Within each report class, we'll create a number of test methods to execute our report's logic. Each test method must start with 'test_*' to be accessible, e. g. test_console_connection.  In DeviceConnectionsReport, for instance, we want to ensure that every live device has a console connection, an out-of-band management connection, and two power connections.
 
 ```
 from dcim.choices import DeviceStatusChoices
